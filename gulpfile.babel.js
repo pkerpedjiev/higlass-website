@@ -5,6 +5,7 @@ import babel from 'rollup-plugin-babel';
 import browserSync from 'browser-sync';
 import bump from 'gulp-bump';
 import clean from 'gulp-clean';
+import concat from 'gulp-concat';
 import eslint from 'gulp-eslint';
 import flatten from 'gulp-flatten';
 import fs from 'fs';
@@ -12,6 +13,8 @@ import gulp from 'gulp';
 import gulpIf from 'gulp-if';
 import gulpUtil from 'gulp-util';
 import ignore from 'gulp-ignore';
+import marked from 'gulp-marked';
+import modify from 'gulp-modify';
 import nano from 'gulp-cssnano';
 import newer from 'gulp-newer';
 import nodeResolve from 'rollup-plugin-node-resolve';
@@ -25,6 +28,7 @@ import sass from 'gulp-sass';
 import semver from 'semver';
 import sourcemaps from 'gulp-sourcemaps';
 import uglify from 'gulp-uglify';
+import zip from 'gulp-zip';
 
 import rollup from './scripts/gulp-rollup';
 
@@ -41,6 +45,30 @@ const bs = browserSync.create(packageJson.name);
 
 // Overwrite global with local settings
 Object.assign(config, configLocal);
+
+// Extend marked options
+const renderer = new marked.marked.Renderer();
+
+renderer.heading = (text, level) => {
+  const escapedText = text.toLowerCase().replace(/[^\w]+/g, '-');
+
+  return `
+<h${level + 1} id="${escapedText}" class="smaller underlined anchored">
+  <a href="${escapedText}" class="hidden-anchor">
+    <svg class="icon">
+      <use
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="../assets/images/icons.svg#link"></use>
+    </svg>
+  </a>
+  <span>${text}</span>
+</h${level + 1}>
+  `;
+};
+
+Object.assign(config.markedOptions, { renderer });
+
+let wikiHtml = '';
 
 
 /*
@@ -131,10 +159,13 @@ gulp.task('clean', () => gulp
 
 // Docs
 gulp.task('docs', () => gulp
-  .src(`${config.src}/${config.assets.docs}/**/*`)
+  .src(`${config.dist}/${config.docs}/index.html`)
   .pipe(plumber())
-  .pipe(newer(`${config.dist}/${config.assets.docs}`))
-  .pipe(gulp.dest(`${config.dist}/${config.assets.docs}`))
+  .pipe(modify({
+    fileModifier: (file, contents) =>
+      contents.replace('<!-- Wiki goes here -->', wikiHtml)
+  }))
+  .pipe(gulp.dest(`${config.dist}/${config.docs}`))
   .pipe(bs.reload({ stream: true }))
 );
 
@@ -353,8 +384,8 @@ gulp.task('dev-watch', () => {
   ).on('change', bs.reload);
 
   gulp.watch(
-    `${config.src}/${config.assets.docs}/**/*`,
-    ['docs']
+    `${config.src}/${config.assets.files}/**/*`,
+    ['files']
   ).on('change', bs.reload);
 
   gulp.watch(
@@ -368,6 +399,35 @@ gulp.task('dev-watch', () => {
   ).on('change', bs.reload);
 });
 
+
+// Parse wiki's markdown files
+gulp.task('wiki', () => gulp
+  .src(`${config.wiki}/**/*.md`)
+  .pipe(plumber())
+  .pipe(marked(config.markedOptions))
+  .pipe(concat('index.html', { newLine: '\n' }))
+  .pipe(modify({
+    fileModifier: (file, contents) => {
+      // This is bit weird setup but well only grad the content of the
+      // concatenated wiki entries here in order to be able to paste them into
+      // the docs HTML later.
+      wikiHtml = contents;
+      return contents;
+    }
+  }))
+  .pipe(bs.reload({ stream: true }))
+);
+
+
+// Zip
+gulp.task('zip', () => gulp
+  .src(`${config.dist}/**/*`)
+  .pipe(plumber())
+  .pipe(zip('dist.zip'))
+  .pipe(gulp.dest('.'))
+);
+
+
 /*
  * -----------------------------------------------------------------------------
  * Task compiltions
@@ -378,12 +438,7 @@ gulp.task('dev-watch', () => {
 // Watch Files For Changes with live reload sync on every screen connect to
 // localhost.
 gulp.task('dev-watch-sync', (callback) => {
-  runSequence(
-    [
-      'init-live-reload', 'dev-watch'
-    ],
-    callback
-  );
+  runSequence('init-live-reload', 'dev-watch', callback);
 });
 
 gulp.task('build', (callback) => {
@@ -396,21 +451,23 @@ gulp.task('build', (callback) => {
       'js-npm-scripts',
       'sass',
       'images',
-      'docs',
       'videos',
-      'html'
+      'prepare-html'
     ],
     callback
   );
 });
 
+gulp.task('compile', (callback) => {
+  runSequence('build', 'zip', callback);
+});
+
+gulp.task('prepare-html', (callback) => {
+  runSequence(['wiki', 'html'], 'docs', callback);
+});
+
 gulp.task('serve', (callback) => {
-  runSequence(
-    [
-      'build', 'dev-watch-sync'
-    ],
-    callback
-  );
+  runSequence('build', 'dev-watch-sync', callback);
 });
 
 gulp.task('default', ['build']);

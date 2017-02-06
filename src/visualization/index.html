@@ -32,7 +32,7 @@
     </script>
 </head>
 
-<body class="flex-c flex-d-c">
+<body class="rel">
   <script>
     if (window.isMobile && window.isMobile.any) {
       document.body.className += ' mobile';
@@ -50,14 +50,25 @@
 
   <!-- Content starts -->
 
+  <div id="dropNotify" class="full-dim-win flex-c flex-jc-c flex-a-c">
+    <span>Drop JSON Config</span>
+  </div>
+
   <header id="topbar">
-    <div class="wrap flex-c flex-jc-sb">
+    <div class="flex-c flex-jc-sb p-l-0-5 p-r-0-5">
       <div class="flex-c branding-launch">
         <a href=".." class="branding">
           <span class="higlass"><span class="higlass-hi">Hi</span>Glass</span>
         </a>
-        <a href="." class="btn is-uppercased is-active">
-          Launch
+        <a
+          href="."
+          class="btn is-uppercased icon-only is-active"
+          title="Launch HiGlass in Full Screen">
+          <svg class="icon">
+            <use
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="../assets/images/icons.svg#maximize"></use>
+          </svg>
         </a>
       </div>
       <nav class="flex-c flex-jc-e flex-a-s is-toggable">
@@ -97,47 +108,13 @@
     </div>
   </header>
 
-  <main class="flex-i-g-1">
-    <div class="border-bottom m-t-1 p-t-1 m-b-1 p-b-2">
+  <main id="main" class="full-dim-cont rel">
+    <div class="full-wh border-bottom">
       <div id="higlass" class="full-dim"></div>
-    </div>
-
-    <div class="wrap p-t-1 p-b-2">
-      <p class="abstract">I'd imagine that the this view is generated dynamically by pulling the related config JSON file from a predefined location. The desciption below could be integrated in the same config file or pulled in parallel from another endpoint.</p>
     </div>
   </main>
 
   <!-- Content ends -->
-
-  <footer id="footer" class="m-t-2 p-t-2 p-b-2">
-    <div class="wrap">
-      <div class="flex-c flex-jc-c">
-        <svg class="logo-hms">
-          <use
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            xlink:href="../assets/images/icons.svg#harvard-hms"></use>
-        </svg>
-        <svg class="logo-dbmi">
-          <use
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            xlink:href="../assets/images/icons.svg#harvard-hms-dbmi"></use>
-        </svg>
-      </div>
-
-      <nav>
-        <ul class="flex-c flex-jc-c flex-a-s no-list-style">
-          <li><a href="..">Home</a></li>
-          <li><a href="../about">About</a></li>
-          <li><a href="." class="is-active">Visualization</a></li>
-          <li><a href="../examples">Examples</a></li>
-          <li><a href="../data-sets">Datasets</a></li>
-          <li><a href="../docs">Docs</a></li>
-        </ul>
-      </nav>
-
-      <p class="copyright centered">Copyright &copy; 2017 the President and Fellows of Harvard College. All content on this website is licensed under the <a href="http://creativecommons.org/licenses/by/4.0/legalcode" target="_blank">Creative Commons Attribution license (CC BY)</a>. Copyright of the linked papers is with the publishers.</p>
-    </div>
-  </footer>
 
   <script src="../assets/scripts-third-party/ga.js"></script>
   <script src="../assets/scripts-third-party/hglib.js"></script>
